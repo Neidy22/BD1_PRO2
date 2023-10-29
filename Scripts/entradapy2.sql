@@ -77,5 +77,12 @@ CALL crearCurso(424,'Curso Electronica 4',12,4,4,true);
 CALL crearCurso(425,'Curso Electronica 5',16,4,4,true);
 
 
+
+
 SELECT * FROM carrera;
 SELECT * FROM estudiante;
+SELECT * FROM docente;
+SELECT * FROM curso;
+CALL dropData();
+
+CALL consultarPensum(3);
