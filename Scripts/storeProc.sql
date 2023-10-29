@@ -293,8 +293,8 @@ IN codigo INT,
 IN nombre VARCHAR(50),
 IN crd_nec INT,
 IN crd_otg INT, 
-IN obligatorio BOOLEAN, 
-IN id_carrera INT 
+IN id_carrera INT, 
+IN obligatorio BOOLEAN
 )
 proc_curso: BEGIN
 	DECLARE result BOOLEAN;
@@ -370,3 +370,94 @@ proc_curso: BEGIN
     CALL Mensaje("Curso registrado correctamente");
 END $$
 DELIMITER ;
+
+DROP PROCEDURE IF EXISTS habilitarCurso;
+DELIMITER $$ 
+CREATE PROCEDURE habilitarCurso(
+-- params
+IN id_curso INT,
+IN ciclo VARCHAR(2),
+IN id_docente INT,
+IN cupo_max INT,
+IN seccion CHAR
+)
+proc_enable: BEGIN
+	DECLARE result BOOLEAN;
+    DECLARE anio INT;
+    SET anio = YEAR(curdate());
+    
+    -- validar que el curso exista
+    IF id_curso IS NULL THEN
+		CALL Mensaje("Error: El código de curso es obligatorio");
+        LEAVE proc_enable;
+	ELSE 
+		SELECT EXISTS(SELECT codigo FROM  curso WHERE curso.codigo = id_curso) INTO result;
+        IF NOT result THEN
+			CALL Mensaje("Error: El curso que desea habilitar no existe, verifica el código del curso");
+            LEAVE proc_enable;
+		END IF;
+	END IF;
+    
+    -- validar ciclo
+    IF ciclo IS NULL THEN
+		CALL Mensaje("Error: El ciclo del curso es obligatorio");
+        LEAVE proc_enable;
+    ELSE
+		SET result = validarCiclo(ciclo);
+        IF NOT result THEN
+			CALL Mensaje("Error: El ciclo no válido, verifica el formato: 1S, 2S, VJ, VD");
+			LEAVE proc_enable;
+		END IF;
+    END IF;
+    
+    -- validar el docente
+    IF id_docente IS NULL THEN
+		CALL Mensaje("Error: El siif del docente del curso es obligatorio");
+        LEAVE proc_enable;
+    ELSE
+		SELECT EXISTS (SELECT siif FROM docente WHERE docente.siif = id_docente) INTO result;
+        IF NOT result THEN
+			CALL Mensaje("Error: El ciclo no válido, verifica el formato: 1S, 2S, VJ, VD");
+			LEAVE proc_enable;
+		END IF;
+    END IF;
+    
+    -- validar cupo máximo entero positivo
+    IF cupo_max IS NULL THEN
+		CALL Mensaje("Error: El cupo máximo del curso es obligatorio");
+        LEAVE proc_enable;
+    ELSE
+		SET result = validarNumeros(cupo_max);
+        IF NOT result OR cupo_max < 0 THEN
+			CALL Mensaje("Error: Cupo máximo no válido, debe ser un entero positivo");
+			LEAVE proc_enable;
+		END IF;
+    END IF;
+    
+    -- validar sección sea A-Z y que no se repita
+    IF seccion IS NULL THEN
+		CALL Mensaje("Error: La sección del curso es obligatoria");
+        LEAVE proc_enable;
+    ELSE
+		SET result = validarSeccion(seccion);
+        IF NOT result THEN
+			CALL Mensaje("Error: Sección no válida, verifica el formato A-Z");
+			LEAVE proc_enable;
+		END IF;
+        
+        SELECT EXISTS (SELECT id FROM curso_habilitado 
+        WHERE curso_habilitado.id_curso = id_curso AND curso_habilitado.ciclo = ciclo AND curso_habilitado.seccion = seccion AND curso_habilitado.anio = anio) 
+        INTO result;
+        
+        IF result THEN
+			CALL Mensaje("Error: Está sección ya fue habilitada para este período, busca una nueva sección");
+			LEAVE proc_enable;
+		END IF;
+    END IF;
+    
+    INSERT INTO curso_habilitado(ciclo, cupo_max, seccion, id_docente, id_curso, anio, cantidad_asignados)
+    VALUES(ciclo, cupo_max, seccion, id_docente, id_curso, anio, 0);
+    CALL Mensaje("Curso habilitado exitosamente");
+END $$
+DELIMITER ;
+

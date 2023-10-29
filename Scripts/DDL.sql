@@ -49,6 +49,7 @@ CREATE TABLE IF NOT EXISTS curso_habilitado(
     id_docente INT NOT NULL,
     id_curso INT NOT NULL,
     anio INT NOT NULL, 
+    cantidad_asignados INT NOT NULL,
     FOREIGN KEY (id_docente) REFERENCES docente(siif),
     FOREIGN KEY (id_curso) REFERENCES curso(codigo)
 );

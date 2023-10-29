@@ -86,3 +86,15 @@ SELECT * FROM curso;
 CALL dropData();
 
 CALL consultarPensum(3);
+CALL consultarEstudiante(201801679);
+CALL consultarDocente(6);
+
+CALL habilitarCurso(421,'1S',1,115,'A');
+CALL habilitarCurso(421,'1S',1,115,'B');
+CALL habilitarCurso(421,'2S',1,115,'A');
+CALL habilitarCurso(421,'VJ',1,115,'A');
+CALL habilitarCurso(421,'VD',1,115,'A');
+CALL habilitarCurso(421,'2S',1,115,'B');
+CALL habilitarCurso(421,'2S',2,115,'B');
+
+SELECT * FROM curso_habilitado;
