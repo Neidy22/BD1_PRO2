@@ -284,3 +284,89 @@ proc_docente: BEGIN
     CALL Mensaje("Docente Registrado correctamente");    
 END $$
 DELIMITER ;
+
+DROP PROCEDURE IF EXISTS crearCurso;
+DELIMITER $$
+CREATE PROCEDURE crearCurso(
+-- params
+IN codigo INT,
+IN nombre VARCHAR(50),
+IN crd_nec INT,
+IN crd_otg INT, 
+IN obligatorio BOOLEAN, 
+IN id_carrera INT 
+)
+proc_curso: BEGIN
+	DECLARE result BOOLEAN;
+    -- validar codigo
+    IF codigo IS NULL THEN
+		CALL Mensaje("Error: El código del curso es de carácter obligatorio");
+        LEAVE proc_curso;
+	ELSE
+		-- validar que el código no exista 
+        SELECT EXISTS(SELECT codigo FROM curso WHERE curso.codigo = codigo) INTO result;
+        IF result THEN
+			CALL Mensaje("Error: Ya existe un curso para este código");
+            LEAVE proc_curso;
+		END IF;
+		-- validar que el codigo sea numérico
+        SET result = validarNumeros(codigo);
+        IF NOT result THEN
+			CALL Mensaje("Error: El código de curso debe ser numérico");
+            LEAVE proc_curso;
+		END IF;
+    END IF;
+    -- validar nombre
+    IF nombre IS NULL THEN
+		CALL Mensaje("Error: El nombre del curso es de carácter obligatorio");
+        LEAVE proc_curso;
+	END IF;
+
+    -- validar creditos necesarios
+	IF crd_nec IS NULL THEN
+		CALL Mensaje("Error: La cantidad de créditos necesarios del curso es de carácter obligatorio");
+        LEAVE proc_curso;
+	ELSE
+		-- validar que sea 0 o un entero positivo
+        SET result = validarNumeros(crd_nec);
+        IF NOT result OR crd_nec < 0 THEN
+			CALL Mensaje("Error: La cantidad de créditos necesarios debe ser un número entero positivo");
+            LEAVE proc_curso;
+		END IF;
+	END IF;
+    
+    -- validar creditos que otorga
+	IF crd_otg IS NULL THEN
+		CALL Mensaje("Error: La cantidad de créditos que otorga el curso es de carácter obligatorio");
+        LEAVE proc_curso;
+	ELSE
+		-- validar que sea 0 o un entero positivo
+        SET result = validarNumeros(crd_otg);
+        IF NOT result OR crd_otg < 0 THEN
+			CALL Mensaje("Error: La cantidad de créditos que otorga debe ser un número entero positivo");
+            LEAVE proc_curso;
+		END IF;
+	END IF;
+    
+    -- validar opcionalidad
+    IF obligatorio IS NULL THEN
+		CALL Mensaje("Error: La opcionalidad del curso es de carácter obligatorio");
+        LEAVE proc_curso;
+	END IF;
+		
+    -- validar carrera
+    IF id_carrera IS NULL THEN
+		CALL Mensaje("Error: El id de carrera es de carácter obligatorio");
+        LEAVE proc_curso;
+	ELSE
+		SELECT EXISTS(SELECT id FROM carrera WHERE carrera.id = id_carrera) INTO result;
+        IF NOT result THEN
+			CALL Mensaje("Error: La carrera no existe");
+            LEAVE proc_curso;
+		END IF;
+	END IF;
+    INSERT INTO curso(codigo, nombre, crd_nec, crd_otg, obligatorio, id_carrera)
+    VALUES (codigo, nombre, crd_nec, crd_otg, obligatorio, id_carrera);
+    CALL Mensaje("Curso registrado correctamente");
+END $$
+DELIMITER ;
