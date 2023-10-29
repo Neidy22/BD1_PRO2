@@ -39,7 +39,6 @@ IN direccion varchar(45),
 IN dpi bigint,
 IN carrera int
 )
-
 proc_estudiante: BEGIN
 -- instruciones
 	DECLARE fech DATE;
@@ -76,7 +75,7 @@ proc_estudiante: BEGIN
 		CALL Mensaje("Error, debe ingresar los apellidos obligatoriamente");
         LEAVE proc_estudiante; 
 	ELSE 
-		SET result = validarLetras(nombres);
+		SET result = validarLetras(apellidos);
         IF NOT result THEN
 			CALL Mensaje("Error, los apellidos solo puede contener letras");
 			LEAVE proc_estudiante;
@@ -100,6 +99,19 @@ proc_estudiante: BEGIN
 			LEAVE proc_estudiante; 
 		END IF;
 	END IF;
+    
+    -- validar telefono
+    IF tel IS NULL THEN
+		CALL Mensaje("Error, debe ingresar el teléfono obligatoriamente");
+        LEAVE proc_estudiante; 
+	ELSE
+		SET result = validarNumeros(tel);
+        IF NOT result THEN
+			CALL Mensaje("Error, télefono solo puede contener números, omitir el código de área");
+			LEAVE proc_estudiante; 
+		END IF;
+	END IF;
+			
 	
     -- validar direccion
 	IF direccion IS NULL THEN 
@@ -130,7 +142,6 @@ proc_estudiante: BEGIN
 			LEAVE proc_estudiante; 
         END IF;
 	END IF;
-    
     SET fech = curdate();
     INSERT INTO estudiante(carnet, nombres, apellidos, fecha_nacimiento, correo, telefono, direccion, dpi, id_carrera, creditos)
     VALUES (carnet,nombres,apellidos,fechan,email,tel,direccion,dpi,carrera,0);
@@ -170,3 +181,106 @@ BEGIN
     DROP TABLE IF EXISTS docente;
 END $$
 delimiter ;
+
+DROP PROCEDURE IF EXISTS registrarDocente;
+DELIMITER $$
+CREATE PROCEDURE registrarDocente(
+-- params
+IN nombres VARCHAR(50),
+IN apellidos VARCHAR(50),
+IN fechanac VARCHAR(50),
+IN email VARCHAR(100),
+IN tel INT,
+IN direccion VARCHAR(100),
+IN dpi BIGINT,
+IN siif INT
+)
+proc_docente: BEGIN
+	DECLARE result BOOLEAN;
+    DECLARE fechan DATE;
+    -- DECLARE fech DATE;
+    SET  fechan = STR_TO_DATE(fechanac, '%d-%m-%Y');
+    
+    -- validar siif
+    IF siif IS NULL THEN
+		CALL Mensaje("Error: El siif es un campo obligatorio");
+        LEAVE proc_docente;
+	ELSE
+		SET result = validarNumeros(siif);
+        IF NOT result THEN
+			CALL Mensaje("Error: El siif debe ser un valor numérico!");
+            LEAVE proc_docente;
+		END IF;
+        
+        SELECT EXISTS(SELECT siif FROM docente WHERE docente.siif = siif) INTO result;
+        IF result THEN
+			CALL Mensaje("Error: Ya existe un registro para este docente");
+            LEAVE proc_docente;
+		END IF;
+	END IF;
+    
+    -- validar nombres
+	IF nombres IS NULL THEN 
+		CALL Mensaje("Error, debe ingresar nombres obligatoriamente");
+        LEAVE proc_docente; 
+	END IF;
+        
+	-- validar apellidos
+	IF apellidos IS NULL THEN 
+		CALL Mensaje("Error, debe ingresar los apellidos obligatoriamente");
+        LEAVE proc_docente; 
+	END IF;
+        
+    -- validar fecha  nacimiento
+	IF fechanac IS NULL THEN 
+		CALL Mensaje("Error, debe ingresar fecha de nacimiento obligatoriamente");
+        LEAVE proc_docente; 
+	END IF;
+    
+	-- validar email
+	IF email IS NULL THEN 
+		CALL Mensaje("Error, debe ingresar correo obligatoriamente");
+        LEAVE proc_docente; 
+	ELSE
+		SET result = validarEmail(email);
+        IF NOT result THEN
+			CALL Mensaje("Error, el formato del correo debe ser el siguiente usuario@organizacion.tipo");
+			LEAVE proc_docente; 
+		END IF;
+	END IF;
+    
+    -- validar telefono
+    IF tel IS NULL THEN
+		CALL Mensaje("Error, debe ingresar el teléfono obligatoriamente");
+        LEAVE proc_docente; 
+	ELSE
+		SET result = validarNumeros(tel);
+        IF NOT result THEN
+			CALL Mensaje("Error, télefono solo puede contener números, omitir el código de área");
+			LEAVE proc_docente; 
+		END IF;
+	END IF;
+    
+    -- validar direccion
+	IF direccion IS NULL THEN 
+		CALL Mensaje("Error, debe ingresar direccion obligatoriamente");
+        LEAVE proc_docente;
+	END IF;
+    
+	-- validar dpi
+	IF dpi IS NULL THEN 
+		CALL Mensaje("Error, debe ingresar dpi obligatoriamente");
+        LEAVE proc_docente; 
+	ELSE 
+		SET result = validarNumeros(dpi);
+        IF NOT result THEN
+			CALL Mensaje("Error, el dpi solo puede contener números");
+			LEAVE proc_docente; 
+		END IF;
+	END IF;
+    -- SET fech = curdate();
+    INSERT INTO docente(siif, nombres, apellidos, fecha_nacimiento, correo, telefono, direccion, dpi)
+    VALUES (siif,nombres,apellidos,fechan,email,tel,direccion,dpi);
+    CALL Mensaje("Docente Registrado correctamente");    
+END $$
+DELIMITER ;
