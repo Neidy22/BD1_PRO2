@@ -42,3 +42,25 @@ proc_estudiante_cons: BEGIN
     FROM estudiante WHERE estudiante.carnet = carnt;
 END $$
 DELIMITER ;
+
+DROP PROCEDURE IF EXISTS consultarDocente;
+DELIMITER $$
+CREATE PROCEDURE consultarDocente(
+IN id BIGINT
+)
+proc_docente_cons: BEGIN
+	DECLARE result BOOLEAN;
+    IF id IS NULL THEN
+		CALL Mensaje("Error: Debes introducir el número de registro SIIF del docente a consultar");
+        LEAVE proc_docente_cons;
+	ELSE 
+		SELECT EXISTS(SELECT siif FROM docente WHERE docente.siif = id) INTO result;
+        IF NOT result THEN
+			CALL Mensaje("Error: Docente no encontrado, verifica el número de registro SIIF");
+            LEAVE proc_docente_cons;
+		END IF;
+	END IF;
+    SELECT siif, CONCAT(nombres,' ',apellidos) as nombre_completo, fecha_nacimiento, correo, telefono, direccion, dpi
+    FROM docente WHERE docente.siif = id;
+END $$
+DELIMITER ;
