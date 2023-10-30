@@ -652,3 +652,71 @@ proc_desasig: BEGIN
     
 END $$
 DELIMITER ;
+
+DROP PROCEDURE IF EXISTS ingresarNota;
+DELIMITER $$
+CREATE PROCEDURE ingresarNota(
+IN cod_curso INT,
+IN ciclo VARCHAR(2),
+IN seccion CHAR,
+IN carnet BIGINT,
+IN nota DECIMAL
+)
+proc_nota: BEGIN
+	DECLARE result BOOLEAN;
+    DECLARE final_note INT;
+    DECLARE creds_add INT;
+    DECLARE current_creds INT;
+	DECLARE id_habilitado INT;
+    DECLARE anio INT;
+    SET anio = YEAR(curdate());
+    -- validar que el carnet exista
+    IF carnet IS NULL THEN
+		CALL Mensaje("Error: El carnet del estudiante es obligatorio");
+        LEAVE proc_nota;
+	ELSE 
+		SELECT EXISTS(SELECT carnet FROM estudiante WHERE estudiante.carnet = carnet) INTO result;
+        IF NOT result THEN
+			CALL Mensaje("Error: Estudiante no existe, verifica el número de carnet");
+			LEAVE proc_nota;
+		END IF;
+    END IF;
+   
+    -- validar que la nota sea positiva
+    IF nota IS NULL THEN
+		CALL Mensaje("Error: la nota del curso  es obligatoria");
+        LEAVE proc_nota;
+    ELSE
+		SET result = validarDecimales(nota);
+        IF NOT result OR nota < 0 THEN 
+			CALL Mensaje("Error: la nota del curso puede ser un numero entero o decimal positivo");
+			LEAVE proc_nota;
+		END IF;
+    END IF;
+    
+    SET final_note = ROUND(nota);
+    
+    -- obtener creditos del curso si se aprobo
+    IF final_note >= 61 THEN
+		SELECT crd_otg INTO creds_add FROM curso WHERE curso.codigo = cod_curso;
+        SELECT creditos INTO current_creds FROM estudiante WHERE estudiante.carnet = carnet;
+        
+        UPDATE estudiante
+        SET creditos = current_creds + creds_add
+        WHERE estudiante.carnet = carnet;
+	END IF;
+    
+    SELECT id INTO id_habilitado FROM curso_habilitado c
+    WHERE c.id_curso = cod_curso AND c.ciclo = ciclo AND c.seccion = seccion AND c.anio = anio;
+    
+    SELECT EXISTS(SELECT id FROM nota WHERE nota.id = id_habilitado) INTO result;
+    IF NOT result THEN
+		INSERT INTO nota(id, id_curso, ciclo, seccion)
+		VALUES(id_habilitado, cod_curso, ciclo, seccion);
+	END IF;
+    
+    INSERT INTO detalle_nota(nota, carnet, id_nota)
+    VALUES (final_note, carnet, id_habilitado);
+    
+END $$
+DELIMITER ;

@@ -64,3 +64,59 @@ proc_docente_cons: BEGIN
     FROM docente WHERE docente.siif = id;
 END $$
 DELIMITER ;
+
+DROP PROCEDURE IF EXISTS consultarAsignados;
+DELIMITER $$
+CREATE PROCEDURE consultarAsignados(
+IN cod_curso INT,
+IN ciclo VARCHAR(2),
+IN anio INT,
+IN secc CHAR
+)
+proc_consul_asig: BEGIN
+	DECLARE result BOOLEAN;
+    DECLARE id_habilitado INT;
+    -- validar curso
+    IF cod_curso IS NULL THEN
+		CALL Mensaje("Error: El codigo de curso es obligatorio");
+        LEAVE proc_consul_asig;
+	ELSE
+		SELECT EXISTS(SELECT id FROM curso_habilitado c
+        WHERE c.id_curso = cod_curso AND c.ciclo = ciclo AND c.seccion = secc AND c.anio = anio
+        ) INTO result;
+        IF NOT result THEN
+			CALL Mensaje("Error: El curso no existe, verifica el codigo, ciclo, seccion y año");
+			LEAVE proc_consul_asig;
+		END IF;
+    END IF;
+    -- validar ciclo
+    IF ciclo IS NULL THEN
+		CALL Mensaje("Error: El ciclo de curso es obligatorio");
+        LEAVE proc_consul_asig;
+	ELSE
+		SET result = validarCiclo(ciclo);
+        IF NOT result THEN
+			CALL Mensaje("Error: Verifica el formato del ciclo");
+			LEAVE proc_consul_asig;
+		END IF;
+	END IF;
+    -- validar caracter
+    IF secc IS NULL THEN
+		CALL Mensaje("Error: Las sección de curso es obligatorio");
+        LEAVE proc_consul_asig;
+	ELSE
+		SET result = validarSeccion(secc);
+        IF NOT result THEN
+			CALL Mensaje("Error: Verifica el formato de la sección");
+			LEAVE proc_consul_asig;
+		END IF;
+	END IF;
+    SELECT id INTO id_habilitado FROM curso_habilitado c
+	WHERE c.id_curso = cod_curso AND c.ciclo = ciclo AND c.seccion = secc AND c.anio = anio;
+    
+    SELECT carnet, CONCAT(nombres,' ',apellidos) AS nombre_completo, creditos FROM estudiante e
+    JOIN detalle_asignacion d ON d.carnet = e.carnet AND d.id_asign = id_habilitado;
+    
+    
+END $$
+DELIMITER ;

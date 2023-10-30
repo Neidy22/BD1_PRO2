@@ -103,7 +103,7 @@ CREATE TABLE IF NOT EXISTS detalle_desasignacion(
 );
 
 CREATE TABLE IF NOT EXISTS detalle_nota(
-	id INT PRIMARY KEY,
+	id INT AUTO_INCREMENT PRIMARY KEY,
     nota INT NOT NULL, 
     carnet BIGINT NOT NULL,
     id_nota INT NOT NULL,

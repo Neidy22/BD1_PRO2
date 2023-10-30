@@ -99,7 +99,8 @@ CALL habilitarCurso(0321,'1S',4,2,'A'); -- civil
 
 
 CALL agregarHorario(1, 6, '09:00-10:40');
-CALL agregarHorario(1, 6, '08:00-10:40');
+CALL agregarHorario(1, 3, '08:00-10:40');
+CALL agregarHorario(1, 4, '08:00-10:40');
 
 CALL asignarCurso(421, '1S', 'A', 202000001);
 CALL asignarCurso(421, '1S', 'A', 202000001);
@@ -130,4 +131,12 @@ SELECT * FROM docente;
 SELECT * FROM curso;
 SELECT * FROM desasignacion;
 SELECT * FROM detalle_desasignacion;
+SELECT * FROM historial;
 CALL dropData();
+
+CALL consultarAsignados(421, '1S', 2023, 'A');
+CALL consultarAsignados(421, '2S', 2023, 'A');
+CALL consultarAsignados(422, '1S', 2023, 'B');
+CALL consultarAsignados(6, '1S', 2023, 'A');
+CALL consultarAsignados(321, '1S', 2023, 'A');
+CALL consultarAsignados(421, '1S', 2022, 'A');
