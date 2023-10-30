@@ -95,6 +95,9 @@ CALL habilitarCurso(421,'2S',1,115,'A');
 CALL habilitarCurso(421,'VJ',1,115,'A');
 CALL habilitarCurso(421,'VD',1,115,'A');
 CALL habilitarCurso(421,'2S',1,115,'B');
-CALL habilitarCurso(421,'2S',2,115,'B');
+CALL habilitarCurso(421,'2S',1,115,'B');
 
 SELECT * FROM curso_habilitado;
+
+CALL agregarHorario(1, 6, '09:00-10:40');
+CALL agregarHorario(1, 6, '08:00-10:40');

@@ -417,7 +417,7 @@ proc_enable: BEGIN
     ELSE
 		SELECT EXISTS (SELECT siif FROM docente WHERE docente.siif = id_docente) INTO result;
         IF NOT result THEN
-			CALL Mensaje("Error: El ciclo no válido, verifica el formato: 1S, 2S, VJ, VD");
+			CALL Mensaje("Error: Docente no encontrado, verificar SIIF");
 			LEAVE proc_enable;
 		END IF;
     END IF;
@@ -461,3 +461,51 @@ proc_enable: BEGIN
 END $$
 DELIMITER ;
 
+DROP PROCEDURE IF EXISTS agregarHorario;
+DELIMITER $$
+CREATE PROCEDURE agregarHorario(
+IN id_curso INT,
+IN dia INT,
+IN horario VARCHAR(15)
+)
+proc_add_hor: BEGIN
+	DECLARE result BOOLEAN;
+    -- validar id curso
+    IF id_curso IS NULL THEN
+		CALL Mensaje("Error: El id de curso es obligatorio");
+        LEAVE proc_add_hor;
+    ELSE
+		SELECT EXISTS (SELECT id FROM curso_habilitado WHERE curso_habilitado.id = id_curso) INTO result; 
+        IF NOT result THEN
+			CALL Mensaje("Error: Id de curso no existe");
+			LEAVE proc_add_hor;
+		END IF;
+	END IF;
+        
+    -- validar día 
+    IF dia IS NULL THEN
+		CALL Mensaje("Error: El campo de día es obligatorio");
+        LEAVE proc_add_hor;
+    ELSE
+		SET result = validarNumeros(dia);
+        IF NOT result OR dia<1 OR dia>7 THEN
+			CALL Mensaje("Error: El campo de día debe ser numérico entre 1-7");
+			LEAVE proc_add_hor;
+		END IF;
+    END IF;
+    -- validar hora
+    IF horario IS NULL THEN
+		CALL Mensaje("Error: El de horario es obligatorio");
+        LEAVE proc_add_hor;
+    ELSE
+		SET result = validarHorario(horario);
+        IF NOT result THEN
+			CALL Mensaje("Error: El horario debe cumplir el formato HH:MM - HH:MM");
+			LEAVE proc_add_hor;
+        END IF;
+    END IF;
+    INSERT INTO horario(dia, rango, id_curso) 
+    VALUES (dia, horario, id_curso);
+    CALL Mensaje("Horario asignado correctamente");
+END $$
+DELIMITER ;

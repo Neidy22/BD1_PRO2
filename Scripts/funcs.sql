@@ -8,7 +8,6 @@ RETURN IF (str REGEXP '^[a-zA-Zaáéíóú ]*$',true,false);
 END $$
 DELIMITER ;
 
-
 DROP FUNCTION IF EXISTS validarNumeros;
 DELIMITER $$
 CREATE FUNCTION validarNumeros(num VARCHAR(100))
@@ -56,6 +55,16 @@ RETURNS BOOLEAN DETERMINISTIC
 BEGIN
 RETURN IF 
 (email REGEXP '^[a-zA-Z0-9]+@[a-zA-Z]+(\.[a-zA-Z]+)+$',true,false);
+END $$
+DELIMITER ;
+
+DROP FUNCTION IF EXISTS validarHorario;
+DELIMITER $$
+CREATE FUNCTION validarHorario(rango VARCHAR(20))
+RETURNS BOOLEAN DETERMINISTIC
+BEGIN
+RETURN IF 
+(rango REGEXP '^(0[0-9]|1[0-9]|2[0-3]):[0-5][0-9]-(0[0-9]|1[0-9]|2[0-3]):[0-5][0-9]$', true, false);
 END $$
 DELIMITER ;
 
