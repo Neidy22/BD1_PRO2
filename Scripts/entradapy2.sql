@@ -96,8 +96,28 @@ CALL habilitarCurso(421,'VJ',1,115,'A');
 CALL habilitarCurso(421,'VD',1,115,'A');
 CALL habilitarCurso(421,'2S',1,115,'B');
 CALL habilitarCurso(421,'2S',1,115,'B');
-
+CALL habilitarCurso(422,'1S',2,2,'B');
+CALL habilitarCurso(0006,'1S',3,2,'A'); -- area comun
+CALL habilitarCurso(0777,'1S',4,2,'A'); -- sistemas
+CALL habilitarCurso(0321,'1S',4,2,'A'); -- civil
 SELECT * FROM curso_habilitado;
 
 CALL agregarHorario(1, 6, '09:00-10:40');
 CALL agregarHorario(1, 6, '08:00-10:40');
+
+CALL asignarCurso(421, '1S', 'A', 202000001);
+CALL asignarCurso(421, '1S', 'A', 202000001);
+CALL asignarCurso(421, '2S', 'A', 202000001);
+CALL asignarCurso(421, '2S', 'C', 202000001);
+CALL asignarCurso(422, '1S', 'B', 202000001);
+CALL asignarCurso(422, '1S', 'B', 202100002);
+CALL asignarCurso(422, '1S', 'B', 202300001);
+CALL asignarCurso(422, '1S', 'B', 202300002);
+CALL asignarCurso(422, '1S', 'B', 202200001);
+CALL asignarCurso(422, '1S', 'B', 202200002);
+CALL asignarCurso(422, '1S', 'B', 201710160);
+CALL asignarCurso(0006, '1S', 'A', 201710161); -- estudiante de civil se puede asignar a area comun
+CALL asignarCurso(321, '1S', 'A', 202000003); -- estudiante de sistemas no se puede asignar a curso de civil 
+
+SELECT * FROM asignacion;
+SELECT * FROM detalle_asignacion;

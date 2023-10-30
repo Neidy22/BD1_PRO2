@@ -87,7 +87,7 @@ CREATE TABLE IF NOT EXISTS nota(
 );
 
 CREATE TABLE IF NOT EXISTS detalle_asignacion(
-	id INT PRIMARY KEY,
+	id INT AUTO_INCREMENT PRIMARY KEY,
     carnet BIGINT NOT NULL, 
     id_asign INT NOT NULL,
     FOREIGN KEY (carnet) REFERENCES estudiante(carnet),

@@ -509,3 +509,89 @@ proc_add_hor: BEGIN
     CALL Mensaje("Horario asignado correctamente");
 END $$
 DELIMITER ;
+
+DROP PROCEDURE IF EXISTS asignarCurso;
+DELIMITER $$
+CREATE PROCEDURE asignarCurso(
+IN cod_curso INT,
+IN ciclo VARCHAR(2),
+IN seccion CHAR,
+IN carnet BIGINT
+)
+proc_asignacion: BEGIN
+	DECLARE result BOOLEAN;
+    DECLARE id_habilitado INT;
+    DECLARE cup_max INT;
+    DECLARE asignados INT;
+    DECLARE crd_nece INT;
+    DECLARE crd_dispo INT;
+    DECLARE carrera_curs INT;
+    DECLARE carrera_estu INT;
+    DECLARE anio INT;
+    SET anio = YEAR(curdate());
+    -- validar valores nulos
+    
+    -- validar que el carnet del estudiante exista
+    SELECT EXISTS (SELECT carnet FROM estudiante WHERE estudiante.carnet = carnet) INTO result;
+    IF NOT result THEN
+		CALL Mensaje("Error: El estudiante no se encuentra registrado, verifica el carnet");
+        LEAVE proc_asignacion;
+	END IF;
+    
+    -- obtener datos del curso habilitado
+    SELECT id, cupo_max, cantidad_asignados INTO id_habilitado, cup_max, asignados FROM curso_habilitado 
+    WHERE curso_habilitado.id_curso = cod_curso AND curso_habilitado.ciclo = ciclo AND curso_habilitado.seccion = seccion AND curso_habilitado.anio = anio;
+    
+    IF id_habilitado IS NULL THEN
+		CALL Mensaje("Error: El curso no ha sido habilitado para este período");
+        LEAVE proc_asignacion;
+	END IF;
+    
+    -- validar si el curso ya se ingreso en asignacion
+    SELECT EXISTS(SELECT id FROM asignacion WHERE asignacion.id = id_habilitado) INTO result;
+    IF NOT result THEN
+		INSERT INTO asignacion(id, id_curso, ciclo, seccion)
+        VALUES(id_habilitado, cod_curso, ciclo, seccion);
+	END IF;
+    
+    -- validar que el estudiante no se haya asignado al curso
+    SELECT EXISTS (
+		SELECT id_asign, id_curso FROM detalle_asignacion d, asignacion a
+        WHERE  d.carnet = carnet AND a.ciclo = ciclo AND a.id_curso = cod_curso 
+    ) INTO result;
+    
+    IF result THEN
+		CALL Mensaje("El estudiante ya se encuentra asignado al curso");
+        LEAVE proc_asignacion;
+	END IF;
+    
+    -- validar que exista cupo en el curso
+    IF cup_max <= asignados THEN
+		CALL Mensaje("Error: El curso alcanzó su cupo limite");
+        LEAVE proc_asignacion;
+	END IF;
+    
+    -- validar que cuente con los creditos necesarios
+    SELECT crd_nec, id_carrera INTO crd_nece, carrera_curs FROM curso WHERE curso.codigo = cod_curso;
+    SELECT creditos, id_carrera INTO crd_dispo, carrera_estu FROM estudiante WHERE estudiante.carnet = carnet;
+    
+    IF crd_dispo < crd_nece THEN
+		CALL Mensaje("Error: No se puede asignar por falta de creditos");
+        LEAVE proc_asignacion;
+	END IF;
+    
+    -- validar que el curso corresponda a la carrera o area comun
+	IF carrera_curs != carrera_estu AND carrera_curs > 0 THEN
+		CALL Mensaje("Error: No se puede asignar un curso de otra carrera a la que pertenece el estudiante");
+        LEAVE proc_asignacion;
+	END IF;
+    
+    INSERT INTO detalle_asignacion(carnet, id_asign)
+    VALUES (carnet, id_habilitado);
+    -- actualizando los valores de los asignados
+    UPDATE curso_habilitado 
+    SET cantidad_asignados = asignados + 1
+    WHERE curso_habilitado.id = id_habilitado;
+    CALL Mensaje("Estudiante asignado al curso correctamente");
+END $$
+DELIMITER ;
