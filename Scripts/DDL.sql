@@ -95,7 +95,7 @@ CREATE TABLE IF NOT EXISTS detalle_asignacion(
 );
 
 CREATE TABLE IF NOT EXISTS detalle_desasignacion(
-	id INT PRIMARY KEY,
+	id INT AUTO_INCREMENT PRIMARY KEY,
     carnet BIGINT NOT NULL, 
     id_desasign INT NOT NULL,
     FOREIGN KEY (carnet) REFERENCES estudiante(carnet),

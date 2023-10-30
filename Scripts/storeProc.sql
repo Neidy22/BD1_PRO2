@@ -595,3 +595,60 @@ proc_asignacion: BEGIN
     CALL Mensaje("Estudiante asignado al curso correctamente");
 END $$
 DELIMITER ;
+
+DROP PROCEDURE IF EXISTS desasignarCurso;
+DELIMITER $$
+CREATE PROCEDURE desasignarCurso(
+IN cod_curso INT,
+IN ciclo VARCHAR(2),
+IN seccion CHAR,
+IN carnet BIGINT
+)
+proc_desasig: BEGIN
+	DECLARE result BOOLEAN;
+    DECLARE id_habilitado INT;
+    DECLARE asignados INT;
+    -- validar que el estudiante exista
+    IF carnet IS NULL THEN
+		CALL Mensaje("Error: El carnet es un campo obligatorio");
+        LEAVE proc_desasig;
+    ELSE
+		SELECT EXISTS(SELECT carnet FROM estudiante WHERE estudiante.carnet = carnet) INTO result;
+        IF NOT result THEN
+			CALL Mensaje("Error: El estudiante no existe, verifica el carnet");
+            LEAVE proc_desasig;
+        END IF;
+    END IF;
+    
+    -- validar que el estudiante este asignado
+    SELECT EXISTS(
+    SELECT id_asign, id_curso FROM  detalle_asignacion d, asignacion a 
+    WHERE a.id_curso = cod_curso AND a.ciclo = ciclo AND a.seccion = seccion AND d.carnet = carnet
+    ) INTO result;
+    
+    IF NOT result THEN
+		CALL Mensaje("Error: El estudiante no se encuentra asignado al curso");
+        LEAVE proc_desasig;
+    END IF;
+    
+    SELECT id, cantidad_asignados INTO id_habilitado, asignados FROM curso_habilitado a
+    WHERE a.id_curso = cod_curso AND a.ciclo = ciclo AND a.seccion = seccion AND a.anio = anio;
+    
+    
+    -- actualizar desasignados
+    SELECT EXISTS(SELECT id FROM desasignacion WHERE desasignacion.id = id_habilitado) INTO result;
+    IF NOT result THEN
+		INSERT INTO desasignacion(id, id_curso, ciclo, seccion)
+		VALUES(id_habilitado, cod_curso, ciclo, seccion);
+	END IF;
+    
+    INSERT INTO detalle_asignacion(carnet, id_desasign)
+    VALUES (carnet, id_habilitado);
+    
+    UPDATE curso_habilitado 
+    SET cantidad_asignados = asignados - 1
+    WHERE curso_habilitado.id = id_habilitado;
+    CALL Mensaje("Estudiante desasignado del curso correctamente");
+    
+END $$
+DELIMITER ;
